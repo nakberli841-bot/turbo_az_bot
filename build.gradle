@@ -31,7 +31,7 @@ dependencies {
 	implementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
 	implementation 'org.mapstruct:mapstruct:1.4.2.Final'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.2.Final'
-
+	implementation 'org.telegram:telegrambots-spring-boot-starter:6.8.0'
 
 }
 
