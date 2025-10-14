@@ -5,6 +5,7 @@ import com.nurlan.turboazbot.turbo_az_bot.entity.SearchCriteria;
 import com.nurlan.turboazbot.turbo_az_bot.entity.User;
 import com.nurlan.turboazbot.turbo_az_bot.repo.CarAddRepo;
 import com.nurlan.turboazbot.turbo_az_bot.repo.CriteriaDataRepo;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class MatchingService {
         this.criteriaRepo = criteriaRepo;
     }
 
+    @Transactional
     public void criteriaWithCars() {
        List<SearchCriteria> Allcriteria= criteriaRepo.findAll();
        for (SearchCriteria criteria : Allcriteria) {
@@ -29,10 +31,10 @@ public class MatchingService {
 
            List<CarAd> cars = carAddRepo.findByCars(title, year, price, createdAt);
            for (CarAd car : cars) {
-               car.setSearchCriteria(criteria);
+               car.getSearchCriteria().add(criteria);
 
            }
-           carAddRepo.saveAll(cars);
+
        }
 
 

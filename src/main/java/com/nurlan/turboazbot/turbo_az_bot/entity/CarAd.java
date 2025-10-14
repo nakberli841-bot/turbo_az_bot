@@ -6,6 +6,8 @@ import lombok.Data;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -30,10 +32,14 @@ public class CarAd {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne()
-    @JoinColumn(name = "search_criteria_id")
+    @ManyToMany()
+    @JoinTable(
+            name = "carad_searchcriteria",
+            joinColumns = @JoinColumn(name = "carad_id"),
+            inverseJoinColumns = @JoinColumn(name = "criteria_id")
+    )
     @JsonIgnore
-    private SearchCriteria searchCriteria;
+    private List<SearchCriteria> searchCriteria=new ArrayList<>();
 
 
 

@@ -23,7 +23,7 @@ public class CarAddCustomRepo {
         this.em = em;
     }
 
-    public List<CarAd> searchCarAds(
+    public List<CarAd> searchCarAds(  //criteria api nin mentiqini daha detalli oyren
             String title,
             String year,
             String price,

@@ -28,7 +28,7 @@ public class SearchCriteria {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "searchCriteria", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "searchCriteria")
     private List<CarAd> carAds = new ArrayList<>();
 
 

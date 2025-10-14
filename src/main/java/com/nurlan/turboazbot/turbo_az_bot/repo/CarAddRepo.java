@@ -27,8 +27,8 @@ public interface CarAddRepo extends JpaRepository<CarAd,Integer>{
 
 
 
-    @Query("SELECT s FROM CarAd s WHERE s.searchCriteria.id = :criteria_id")
-    List<CarAd> findByCriteriaId(@Param("criteria_id") Integer criteria_id);
+    @Query("SELECT c FROM CarAd c JOIN c.searchCriteria sc WHERE sc.id = :criteriaId")
+    List<CarAd> findByCriteriaId(@Param("criteriaId") Integer criteriaId);
 
 
     @Query("SELECT c.externalId FROM CarAd c")

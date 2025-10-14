@@ -27,7 +27,6 @@ public class ResultService {
         List<CarAd> allCars = new ArrayList<CarAd>();
 
         for (SearchCriteria criteria : criterias) {
-            System.out.println(criteria.getTitle());
             List<CarAd> Cars = carAddRepo.findByCriteriaId(criteria.getId());
             allCars.addAll(Cars);
         }

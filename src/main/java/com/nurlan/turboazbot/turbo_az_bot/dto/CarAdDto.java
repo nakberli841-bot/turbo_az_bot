@@ -4,6 +4,8 @@ import com.nurlan.turboazbot.turbo_az_bot.entity.SearchCriteria;
 import com.nurlan.turboazbot.turbo_az_bot.entity.User;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class CarAdDto {
 
@@ -23,6 +25,6 @@ public class CarAdDto {
 
     private User user;
 
-    private SearchCriteria searchCriteria;
+    private List<SearchCriteria> searchCriteria;
 
 }
