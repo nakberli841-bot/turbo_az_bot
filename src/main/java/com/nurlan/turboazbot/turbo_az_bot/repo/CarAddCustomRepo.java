@@ -11,6 +11,7 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,71 +24,54 @@ public class CarAddCustomRepo {
         this.em = em;
     }
 
-    public List<CarAd> searchCarAds(  //criteria api nin mentiqini daha detalli oyren
+    public List<CarAd> searchCarAds(// bu metodun isleme prinsipini detalli oyren
             String title,
-            String year,
-            String price,
-            String createdAt,
-            String link,
-            String externalId,
-            int page,
-            int size
-            //String sort
+            Integer yearFrom, Integer yearTo,
+            Integer priceFrom, Integer priceTo,
+            LocalTime createdAtFrom, LocalTime createdAtTo
     ) {
+
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<CarAd> cq = cb.createQuery(CarAd.class);
         Root<CarAd> root = cq.from(CarAd.class);
 
         List<Predicate> predicates = new ArrayList<>();
 
-        // Dinamik like/equal şərtləri
         if (title != null && !title.isEmpty()) {
             predicates.add(cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase() + "%"));
         }
 
-        if (year != null && !year.isEmpty()) {
-            predicates.add(cb.like(cb.lower(root.get("year")), "%" + year.toLowerCase() + "%"));
+        if (yearFrom != null && yearTo != null) {
+            predicates.add(cb.between(root.get("year"), yearFrom, yearTo));
+        } else if (yearFrom != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("year"), yearFrom));
+        } else if (yearTo != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("year"), yearTo));
         }
 
-        if (price != null && !price.isEmpty()) {
-            predicates.add(cb.like(cb.lower(root.get("price")), "%" + price.toLowerCase() + "%"));
+        if (priceFrom != null && priceTo != null) {
+            predicates.add(cb.between(root.get("price"), priceFrom, priceTo));
+        } else if (priceFrom != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("price"), priceFrom));
+        } else if (priceTo != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("price"), priceTo));
         }
 
-        if (createdAt != null && !createdAt.isEmpty()) {
-            predicates.add(cb.like(cb.lower(root.get("createdAt")), "%" + createdAt.toLowerCase() + "%"));
+        if (createdAtFrom != null && createdAtTo != null) {
+            predicates.add(cb.between(root.get("createdAt"), createdAtFrom, createdAtTo));
+        } else if (createdAtFrom != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdAtFrom));
+        } else if (createdAtTo != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), createdAtTo));
         }
 
-        if (link != null && !link.isEmpty()) {
-            predicates.add(cb.like(cb.lower(root.get("link")), "%" + link.toLowerCase() + "%"));
-        }
+        cq.where(cb.and(predicates.toArray(new Predicate[0])));
 
-        if (externalId != null && !externalId.isEmpty()) {
-            predicates.add(cb.like(cb.lower(root.get("externalId")), "%" + externalId.toLowerCase() + "%"));
-        }
 
-        // Bütün predicate-ləri AND ilə birləşdir
-        if (!predicates.isEmpty()) {
-            cq.where(cb.and(predicates.toArray(new Predicate[0])));
-        }
+        cq.orderBy(cb.desc(root.get("createdAt")));
 
-//        String[] sortParams = sort.split(",");
-//        String sortField = sortParams[0];
-//        Sort.Direction direction = Sort.Direction.fromString(sortParams[1]);
-//
-//        if (direction.isAscending()) {
-//            cq.orderBy(cb.asc(root.get(sortField)));
-//        } else {
-//            cq.orderBy(cb.desc(root.get(sortField)));
-//        }
 
-        // --- Query yarat ---
         TypedQuery<CarAd> query = em.createQuery(cq);
-
-        // --- Pagination (səhifələmə) ---
-        query.setFirstResult(page * size);
-        query.setMaxResults(size);
-
-        // --- Nəticə ---
         return query.getResultList();
     }
 

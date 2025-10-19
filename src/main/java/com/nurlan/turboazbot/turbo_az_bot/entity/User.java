@@ -22,6 +22,8 @@ public class User {
 
     private String email;
 
+    private Long TelegramChatId;
+
     @OneToMany( mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     @JsonIgnore
     private List<SearchCriteria> criteriaList = new ArrayList<>();

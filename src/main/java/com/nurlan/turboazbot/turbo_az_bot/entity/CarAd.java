@@ -6,6 +6,7 @@ import lombok.Data;
 
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,11 +19,11 @@ public class CarAd {
 
     private String title;
 
-    private String year;
+    private Integer year;
 
-    private String price;
+    private Integer price;
 
-    private String createdAt;
+    private LocalTime createdAt;
 
     private String link;
 

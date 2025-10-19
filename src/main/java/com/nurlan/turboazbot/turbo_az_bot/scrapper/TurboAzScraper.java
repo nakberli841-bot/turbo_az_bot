@@ -9,6 +9,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -26,13 +27,12 @@ public class TurboAzScraper {
     }
 
     @Transactional //bu trancatinalida aarasdirarsan
-    public List<CarAd> scrapeAndSave(int fromPage, int toPage) throws IOException {
+    public List<CarAd> scrapeAndSave() throws IOException {
         List<CarAd> list = new ArrayList<>();
         Set<String> existingIds = new HashSet<>(carAddRepo.findAllExternalIds());//bazada olan id ler
         Set<String> newIds = new HashSet<>();// listde olan id ler
 
-        for (int page = fromPage; page < toPage; page++) {
-            String url = "https://turbo.az/autos?page=" + page;
+            String url = "https://turbo.az/autos";
 
             try {
                 Document document = Jsoup.connect(url).get();
@@ -42,9 +42,10 @@ public class TurboAzScraper {
 
 
                     String title = element.select(".products-i__name").text();
-                    String price = element.select(".products-i__price").text();
-                    String il = element.select(".products-i__attributes ").text();
-                    String time = element.select(".products-i__datetime").text();
+                    Integer price =Integer.parseInt(element.select(".products-i__price").text().replaceAll("[^0-9]", ""));
+                    Integer il = Integer.parseInt(element.select(".products-i__attributes ").text().split(",")[0].trim());
+                    LocalTime time = LocalTime.parse(element.select(".products-i__datetime").text().replaceAll(".*?(\\d{2}:\\d{2}).*", "$1"));
+
                     String link = "https://turbo.az" + element.select(".products-i__link").attr("href");
                     String externalId = link.substring(link.lastIndexOf("/") + 1).split("-")[0];
 
@@ -68,7 +69,7 @@ public class TurboAzScraper {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+
 
         carAddRepo.saveAll(list);
         return list;

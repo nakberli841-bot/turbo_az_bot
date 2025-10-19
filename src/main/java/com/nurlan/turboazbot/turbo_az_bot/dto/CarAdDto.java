@@ -4,6 +4,7 @@ import com.nurlan.turboazbot.turbo_az_bot.entity.SearchCriteria;
 import com.nurlan.turboazbot.turbo_az_bot.entity.User;
 import lombok.Data;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -13,11 +14,11 @@ public class CarAdDto {
 
     private String title;
 
-    private String year;
+    private Integer year;
 
-    private String price;
+    private Integer price;
 
-    private String createdAt;
+    private LocalTime createdAt;
 
     private String link;
 

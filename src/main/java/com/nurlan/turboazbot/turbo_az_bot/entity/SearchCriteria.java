@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,9 +21,12 @@ public class SearchCriteria {
     private Integer id;
 
     private String title;
-    private String year;
-    private String Price;
-    private String createdAt;
+    private Integer yearTo;
+    private Integer yearFrom;
+    private Integer PriceTo;
+    private Integer PriceFrom;
+    private LocalTime createdAtTo;
+    private LocalTime createdAtFrom;
 
 
     @ManyToOne
