@@ -37,6 +37,8 @@ public class MatchingService {
     public void criteriaWithCars() {
         List<SearchCriteria> Allcriteria = criteriaRepo.findAll();
         for (SearchCriteria criteria : Allcriteria) {
+            User user = criteria.getUser();
+
             String title = criteria.getTitle();
             Integer yearTo = criteria.getYearTo();
             Integer yearFrom = criteria.getYearFrom();
@@ -45,16 +47,19 @@ public class MatchingService {
             LocalTime createdAtTo = criteria.getCreatedAtTo();
             LocalTime createdAtFrom = criteria.getCreatedAtFrom();
 
-            List<CarAd> cars = customRepo.searchCarAds(title,yearFrom,yearTo,priceFrom,priceTo,createdAtFrom,createdAtTo);
-            for (CarAd car : cars) {
+            List<CarAd> allCars = customRepo.searchCarAds(title,yearFrom,yearTo,priceFrom,priceTo,createdAtFrom,createdAtTo);
+            for (CarAd car : allCars) {
                 car.getSearchCriteria().add(criteria);
 
             }
-            User user = criteria.getUser();
+            List<Integer> sentCarIds = notification.findSentCarIdsByUser(user);
 
-            boolean alreadySent = notification.existsByUserAndAnyCarIn(user, cars);
-            if (!alreadySent) {
-                notificationService.sendCarNotification(user, cars);
+            List<CarAd> newCarsToSend = allCars.stream()
+                    .filter(car -> !sentCarIds.contains(car.getId()))
+                    .toList();
+
+            if (!newCarsToSend.isEmpty()) {
+                notificationService.sendCarNotification(user,newCarsToSend);
             }
 
 

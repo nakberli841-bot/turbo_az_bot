@@ -55,9 +55,10 @@ public class UserService {
             LocalTime createdAtTo = sc.getCreatedAtTo();
             LocalTime createdAtFrom = sc.getCreatedAtFrom();
 
+            sc.setUser(userToAssociate);
             criteriaRepo.save(sc);
 
-            sc.setUser(userToAssociate);
+
 
 
 

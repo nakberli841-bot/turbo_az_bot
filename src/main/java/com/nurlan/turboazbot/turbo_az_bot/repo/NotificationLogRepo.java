@@ -20,4 +20,17 @@ JOIN n.cars c
 WHERE n.user = :user 
 AND c IN :cars
 """)
-    boolean existsByUserAndAnyCarIn(@Param("user") User user, @Param("cars") List<CarAd> cars);}
+    boolean existsByUserAndAnyCarIn(@Param("user") User user, @Param("cars") List<CarAd> cars);
+
+
+
+
+
+    @Query("""
+SELECT DISTINCT c.id 
+FROM NotificationLog n 
+JOIN n.cars c 
+WHERE n.user = :user
+""")
+    List<Integer> findSentCarIdsByUser(@Param("user") User user);
+}

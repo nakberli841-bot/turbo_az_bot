@@ -2,6 +2,8 @@ package com.nurlan.turboazbot.turbo_az_bot.telegram;
 
 import com.nurlan.turboazbot.turbo_az_bot.dto.CarAdDto;
 import com.nurlan.turboazbot.turbo_az_bot.repo.NotificationLogRepo;
+import com.nurlan.turboazbot.turbo_az_bot.repo.UserDataRepo;
+import com.nurlan.turboazbot.turbo_az_bot.repo.UsersessionRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
@@ -24,13 +26,15 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class TurboAzBot extends TelegramLongPollingBot implements ApplicationListener<ApplicationReadyEvent> {
 
     private final NotificationLogRepo notificationLogRepo;
+    private final UserDataRepo userDataRepo;
+    private final UsersessionRepo usersessionRepo;
 
     private final Map<Long, UserSession> sessions = new HashMap<>();
 
@@ -55,21 +59,44 @@ public class TurboAzBot extends TelegramLongPollingBot implements ApplicationLis
 
 
             if (text.equals("/start")) {
-                sendMessage(chatId, "Xoş gəldin! 👋\nZəhmət olmasa adını yaz:");
-                sessions.put(chatId, new UserSession());
+
+              Optional<UserSession> userSession=  usersessionRepo.findByTelegramChatId(chatId);
+                if(userSession.isPresent()) {
+                    sendMessage(chatId, "geri geldiyin ucun sevindik "+userSession.get().getName()+" bey 👋,yeni kriterialarinizi,Hansi marka masin isteyirsiz,kecmek ucun skip ede bilersiz");
+                    userSession.get().setStep(2);
+                    sessions.put(chatId, userSession.get());
+                }else {
+                    sendMessage(chatId, "Xoş gəldin! 👋\nZəhmət olmasa adını yaz:");
+                    sessions.put(chatId, new UserSession());
+                    UserSession sessionDB= sessions.get(chatId);
+                    sessionDB.setTelegramChatId(chatId);
+
+                }
                 return;
             }
             if (text.equalsIgnoreCase("new")) {
 
+
+                Optional<UserSession> userSession=  usersessionRepo.findByTelegramChatId(chatId);
+                if(userSession.isPresent()) {
+                    sessions.put(chatId, userSession.get());
+                }else {
+                    sessions.put(chatId, new UserSession());
+                    UserSession sessionDB= sessions.get(chatId);
+                    sessionDB.setTelegramChatId(chatId);
+
+                }
+
                 UserSession oldSession = sessions.get(chatId);
-                if (oldSession == null || oldSession.name == null || oldSession.email == null) {
+                if (oldSession == null || oldSession.getName() == null || oldSession.getEmail() == null) {
                     sendMessage(chatId, "Zəhmət olmasa əvvəlcə /start yaz və ad/email daxil et.");
                     return;
                 }
                 UserSession newSession = new UserSession();
-                newSession.name = oldSession.name;
-                newSession.email = oldSession.email;
-                newSession.step = 2; // Yəni title-dan başlayacaq
+                newSession.setName(oldSession.getName());
+                newSession.setEmail(oldSession.getEmail());
+                newSession.setTelegramChatId(chatId);
+                newSession.setStep(2);
 
                 sessions.put(chatId, newSession);
 
@@ -85,70 +112,73 @@ public class TurboAzBot extends TelegramLongPollingBot implements ApplicationLis
                 return;
             }
 
-            switch (session.step) {
+           int step=session.getStep();
+            switch (step) {
                 case 0 -> {
                     if (text.trim().isEmpty()) {
                         sendMessage(chatId, "Ad boş ola bilməz, zəhmət olmasa adını yaz:");
                         return;
                     }
-                    session.name = text;
+                    session.setName(text);
                     sendMessage(chatId, "Əla! İndi email ünvanını daxil et:");
-                    session.step++;
+                    session.setStep(step + 1);
                 }
                 case 1 -> {
                     if (!text.contains("@")) {
                         sendMessage(chatId, "Email düzgün formatda deyil. Yenidən cəhd et:");
                         return;
                     }
-                    session.email = text;
+                    session.setEmail(text);
                     sendMessage(chatId, "Hansı markanı axtarırsan? (məs: BMW X6)  bos qoymaq isteyirsense skip yaz");
-                    session.step++;
+                    session.setStep(step + 1);
                 }
                 case 2 -> {
                     if (!text.equalsIgnoreCase("skip"))
-                        session.title = text;
+                        session.setTitle(text);
                     sendMessage(chatId, "Minimum və maxsimum ili daxil et (məs: 2005-2006):  bos qoymaq isteyirsense skip yaz");
-                    session.step++;
+                    session.setStep(step + 1);
                 }
                 case 3 -> {
                     if (!text.equalsIgnoreCase("skip")) {
                         try {
                             String[] years = text.split("-");
-                            session.yearFrom = Integer.parseInt(years[0].trim());
-                            session.yearTo = Integer.parseInt(years[1].trim());
+                            session.setYearFrom((Integer.parseInt(years[0].trim())));
+                            session.setYearTo((Integer.parseInt(years[1].trim())));
                         } catch (Exception e) {
                             sendMessage(chatId, "Yanlış format. Məs: 2005-2020 şəklində yaz:");
                             return;
                         }
                     }
                     sendMessage(chatId, "Qiymət aralığını yaz (məs: 20000-30000).   bos qoymaq isteyirsense skip yaz");
-                    session.step++;
-                }
+                    session.setStep(step + 1);                }
                 case 4 -> {
                     if (!text.equalsIgnoreCase("skip")) {
                         try {
                             String[] prices = text.split("-");
-                            session.priceFrom = Integer.parseInt(prices[0].trim());
-                            session.priceTo = Integer.parseInt(prices[1].trim());
+                            session.setPriceFrom(Integer.parseInt(prices[0].trim()));
+                            session.setPriceTo(Integer.parseInt(prices[1].trim()));
                         } catch (Exception e) {
                             sendMessage(chatId, "Yanlış format. Məs: 20000-30000 şəklində yaz:");
                             return;
                         }
                     }
                     sendMessage(chatId, "Saat aralığını yaz (məs: 09:00:00-18:00:00).  bos qoymaq isteyirsense skip yaz");
-                    session.step++;
+                    session.setStep(step + 1);
                 }
                 case 5 -> {
                     if (!text.equalsIgnoreCase("skip")) {
                         try {
                             String[] times = text.split("-");
-                            session.createdAtFrom = LocalTime.parse(times[0].trim());
-                            session.createdAtTo = LocalTime.parse(times[1].trim());
+                            session.setCreatedAtFrom(LocalTime.parse(times[0].trim()));
+                            session.setCreatedAtTo(LocalTime.parse(times[1].trim()));
                         } catch (Exception e) {
                             sendMessage(chatId, "Yanlış format. Məs: 09:00:00-18:00:00 şəklində yaz:");
                             return;
                         }
                     }
+
+                    UserSession sessionDB= sessions.get(chatId);
+                    usersessionRepo.save(sessionDB);
 
 
                     sendMessage(chatId, "Məlumatlar uğurla qəbul edildi ✅ Axtarış başlayır...");
@@ -169,18 +199,18 @@ public class TurboAzBot extends TelegramLongPollingBot implements ApplicationLis
             final String apiUrl = "http://localhost:8080/api/user/creatUserAndCriteria";
 
             User user = new User();
-            user.setName(session.name);
-            user.setEmail(session.email);
+            user.setName(session.getName());
+            user.setEmail(session.getEmail());
             user.setTelegramChatId(chatId);
 
             SearchCriteria criteria = new SearchCriteria();
-            criteria.setTitle(session.title);
-            criteria.setYearFrom(session.yearFrom);
-            criteria.setYearTo(session.yearTo);
-            criteria.setPriceFrom(session.priceFrom);
-            criteria.setPriceTo(session.priceTo);
-            criteria.setCreatedAtFrom(session.createdAtFrom);
-            criteria.setCreatedAtTo(session.createdAtTo);
+            criteria.setTitle(session.getTitle());
+            criteria.setYearFrom(session.getYearFrom());
+            criteria.setYearTo(session.getYearTo());
+            criteria.setPriceFrom(session.getPriceFrom());
+            criteria.setPriceTo(session.getPriceTo());
+            criteria.setCreatedAtFrom(session.getCreatedAtFrom());
+            criteria.setCreatedAtTo(session.getCreatedAtTo());
 
             List<SearchCriteria> list = List.of(criteria);
 
@@ -204,19 +234,21 @@ public class TurboAzBot extends TelegramLongPollingBot implements ApplicationLis
             List<CarAd> cars = response.getBody();
             if (cars != null && !cars.isEmpty()) {
 
+                sendMessage(chatId, "axtaris yekunlasdi! masinlar tapildi");
 
                 int count = 0;
                 for (CarAd car : cars) {
                     count++;
-                    sendMessage(chatId, "axtaris yekunlasdi! masin tapildi");
                     sendMessage(chatId, count + " ci maşın: " + car.getLink());
 
 
                 }
 
+             User userDB=userDataRepo.findByEmail(user.getEmail());
+
+                user.setId(userDB.getId());
+
                 NotificationLog notificationLog = new NotificationLog();
-
-
                 notificationLog.setUser(user);
                 notificationLog.setCars(cars);
                 notificationLog.setSentAt(LocalDateTime.now());
